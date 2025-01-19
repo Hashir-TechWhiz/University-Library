@@ -1,14 +1,22 @@
 'use server';
 
-import { eq } from "drizzle-orm";
-import { db } from "@/database/drizzle";
-import { users } from "@/database/schema";
-import { hash } from "bcryptjs";
 import { signIn } from "@/auth";
+import { hash } from "bcryptjs";
+import { eq } from "drizzle-orm";
+import { headers } from "next/headers";
+import { db } from "@/database/drizzle";
+import ratelimit from "@/lib/rateLimit";
+import { users } from "@/database/schema";
+import { redirect } from "next/navigation";
 
 
 export const SignInWithCredentials = async (params: Pick<AuthCredentials, 'email' | 'password'>) => {
     const { email, password } = params;
+
+    const ip = (await headers()).get('x-forwarded-for') || '127.0.0.1';
+    const { success } = await ratelimit.limit(ip);
+
+    if (!success) return redirect('/too-fast')
 
     try {
         const result = await signIn('credentials', {
@@ -32,6 +40,11 @@ export const SignInWithCredentials = async (params: Pick<AuthCredentials, 'email
 
 export const signUp = async (params: AuthCredentials) => {
     const { fullName, email, password, universityId, universityCard } = params;
+
+    const ip = (await headers()).get('x-forwarded-for') || '127.0.0.1';
+    const { success } = await ratelimit.limit(ip);
+
+    if (!success) return redirect('/too-fast')
 
     const existingUser = await db
         .select()
