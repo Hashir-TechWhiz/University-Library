@@ -13,7 +13,7 @@ interface Book {
     summary: string;
     isLoanedBook?: boolean;
     // createdAt: Date | null;
-};
+}
 
 interface AuthCredentials{
     fullName: string;
