@@ -15,8 +15,6 @@ export default [
   ...compat.extends(
     "next/core-web-vitals",
     "next/typescript",
-    "plugin:tailwindcss/recommended",
-    "prettier"
   ),
   {
     rules: {
