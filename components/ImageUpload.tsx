@@ -15,9 +15,20 @@ const {
 
 const authenticator = async () => {
   try {
-    const response = await fetch(
-      `${config.env.apiEndpoint || config.env.prodApiEndpoint}/api/auth/imagekit`,
-    );
+    // Determine the appropriate base URL
+    const isProduction =
+      typeof window !== "undefined" &&
+      !window.location.hostname.includes("localhost");
+
+    const baseUrl = isProduction
+      ? config.env.prodApiEndpoint
+      : config.env.apiEndpoint;
+
+    if (!baseUrl) {
+      throw new Error("API endpoint configuration is missing");
+    }
+
+    const response = await fetch(`${baseUrl}/api/auth/imagekit`);
 
     if (!response.ok) {
       const errorText = await response.text();
@@ -27,11 +38,14 @@ const authenticator = async () => {
     }
 
     const data = await response.json();
-    const { signature, expire, token } = data;
-
-    return { token, expire, signature };
-  } catch (error: any) {
-    console.error(`Authentication request failed: ${error.message}`);
+    return data;
+  } catch (error) {
+    console.error("Authentication request failed:", error);
+    toast({
+      title: "Authentication Failed",
+      description: "Failed to authenticate with ImageKit. Please try again.",
+      variant: "destructive",
+    });
     throw error;
   }
 };
