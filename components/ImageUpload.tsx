@@ -15,18 +15,22 @@ const {
 
 const authenticator = async () => {
   try {
-    // Determine the appropriate base URL
-    const isProduction =
-      typeof window !== "undefined" &&
-      !window.location.hostname.includes("localhost");
+    // Use a more reliable way to detect production vs development
+    let baseUrl;
 
-    const baseUrl = isProduction
-      ? config.env.prodApiEndpoint
-      : config.env.apiEndpoint;
-
-    if (!baseUrl) {
-      throw new Error("API endpoint configuration is missing");
+    // When deployed to Vercel, use the deployment URL directly
+    if (typeof window !== "undefined") {
+      // For production/deployed environments, use the current origin
+      baseUrl = window.location.origin;
+    } else {
+      // Fallback for server-side rendering contexts
+      baseUrl =
+        config.env.prodApiEndpoint ||
+        config.env.apiEndpoint ||
+        "https://university-library-muhammd-hashir.vercel.app";
     }
+
+    console.log("Using API endpoint:", baseUrl);
 
     const response = await fetch(`${baseUrl}/api/auth/imagekit`);
 
@@ -41,11 +45,6 @@ const authenticator = async () => {
     return data;
   } catch (error) {
     console.error("Authentication request failed:", error);
-    toast({
-      title: "Authentication Failed",
-      description: "Failed to authenticate with ImageKit. Please try again.",
-      variant: "destructive",
-    });
     throw error;
   }
 };
